@@ -57,14 +57,9 @@ def interpolate(points: Union[dict, Sequence[int], Iterable[Sequence[int]]], mod
 	values = None # Initially, assume that the supplied point data is not valid.
 
 	if isinstance(points, dict):
-		if not (
-			all(isinstance(k, int) for k in points.keys()) and \
-			all(isinstance(v, int) for v in points.values())
-		):
+		if not (all(isinstance(k, int) for k in points.keys()) and all(isinstance(v, int) for v in points.values())):
 			raise TypeError(
-				'dictionary that represents points must have integer keys and values'
-			)
-
+				'dictionary that represents points must have integer keys and values')
 		values = points # Valid representation.
 
 	elif isinstance(points, collections.abc.Iterable):
@@ -73,8 +68,7 @@ def interpolate(points: Union[dict, Sequence[int], Iterable[Sequence[int]]], mod
 
 		if all(isinstance(e, int) for e in entries):
 			if not is_sequence:
-				raise TypeError(
-					'iterable of integers that represents points must be a sequence')
+				raise TypeError('iterable of integers that represents points must be a sequence')
 			values = dict(zip(range(1, len(entries) + 1), entries)) # Valid representation.
 
 		elif all(isinstance(e, collections.abc.Sequence) for e in entries):
@@ -83,29 +77,18 @@ def interpolate(points: Union[dict, Sequence[int], Iterable[Sequence[int]]], mod
 				raise TypeError(
 					'iterable that represents points must contain integers ' + \
 					'or two-element sequences of integers')
-
 			values = dict(entries) # Valid representation.
 
-	if values is None:
-		raise TypeError('expecting dictionary or iterable that represents points')
-
-	if len(values) == 0:
-		raise ValueError('at least one point is required')
-
-	if not isinstance(modulus, int):
-		raise TypeError('expecting an integer prime modulus')
-
-	if modulus <= 1:
-		raise ValueError('expecting a positive integer prime modulus')
+	if values is None: raise TypeError('expecting dictionary or iterable that represents points')
+	if len(values) == 0: raise ValueError('at least one point is required')
+	if not isinstance(modulus, int): raise TypeError('expecting an integer prime modulus')
+	if modulus <= 1: raise ValueError('expecting a positive integer prime modulus')
 
 	if degree is not None:
-		if not isinstance(degree, int):
-			raise TypeError('expecting an integer degree')
-		if degree < 0:
-			raise ValueError('expecting a nonnegative integer degree')
+		if not isinstance(degree, int): raise TypeError('expecting an integer degree')
+		if degree < 0: raise ValueError('expecting a nonnegative integer degree')
 
 	degree = degree or len(points) - 1
-
 	if len(values) <= degree:
 		raise ValueError('not enough points for a unique interpolation')
 
