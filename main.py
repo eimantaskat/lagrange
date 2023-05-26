@@ -1,12 +1,13 @@
 import numpy as np
 import sympy as sp
 from optimizations_algorithms import simplex
+from function_wrapper import FunctionWrapper
 
 
 class LagrangeFunction:
 	def __init__(self, objective_function: str, equality_constraints: list, inequality_constraints: list):
 		symbolic_variables = sp.symbols('x y z')
-		self.objective_function = sp.lambdify(symbolic_variables, sp.sympify(objective_function), 'numpy')
+		self.objective_function = FunctionWrapper(function=objective_function, symbols=symbolic_variables)
 
 		self.constraint_functions = {}
 
@@ -18,7 +19,7 @@ class LagrangeFunction:
 
 
 	def __call__(self, X, lambdas, r):
-		objective_value = self.objective_function(*X)
+		objective_value = self.objective_function(X)
 		constraints_values = [constraint(*X) for constraint in self.constraint_functions.values()]
 
 		lagrange_value = objective_value + sum([lam * constraint_value for lam, constraint_value in zip(lambdas, constraints_values)]) + (1 / r) * sum([constraint_value**2 for constraint_value in constraints_values])
@@ -42,6 +43,7 @@ if __name__ == '__main__':
 	# Initial values
 	initial_values = np.array([[0, 0, 0], [1, 1, 1], [.5, .2, .0]])
 	for x0 in initial_values:
+		print(f'Initial values: {x0}')
 		iterations = 0
 		lambdas = [0.0] * (len(equality_constraints) + len(inequality_constraints))
 		r = 10
@@ -54,10 +56,11 @@ if __name__ == '__main__':
 			for i, constraint in enumerate(equality_constraints + inequality_constraints):
 				lambdas[i] += 1/r * lagrange_func.calculate_constraint_value(x0, constraint)
 
-		print(f'Initial values: {x0}')
 		print(f'Iterations: {iterations}')
+		print(f'Objective function call count: {lagrange_func.objective_function.times_called}')
 		print(f'Optimal values: {x0}')
-		print(f'Objective function value: {lagrange_func.objective_function(*x0)}')
+		print(f'Objective function value: {lagrange_func.objective_function(x0)}')
 		print(f'Constraint values: {[lagrange_func.calculate_constraint_value(x0, constraint) for constraint in equality_constraints + inequality_constraints]}')
 		print(f'Lambda values: {lambdas}')
+		print(f'Penalty parameter: {r}')
 		print()
