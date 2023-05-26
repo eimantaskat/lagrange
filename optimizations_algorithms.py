@@ -53,4 +53,4 @@ def simplex(f, x0, lambda_0, r, alpha, tol=1e-4):
             break
 
     # return the best point and iteration count
-    return simplex[best]
+    return simplex[best], iter_count

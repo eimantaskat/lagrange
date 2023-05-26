@@ -2,47 +2,62 @@ import numpy as np
 import sympy as sp
 from optimizations_algorithms import simplex
 
+
 class LagrangeFunction:
 	def __init__(self, objective_function: str, equality_constraints: list, inequality_constraints: list):
-		self.objective_function = sp.sympify(objective_function)
+		symbolic_variables = sp.symbols('x y z')
+		self.objective_function = sp.lambdify(symbolic_variables, sp.sympify(objective_function), 'numpy')
 
-		self.constraints_function = 0
+		self.constraint_functions = {}
+
 		for constraint in equality_constraints:
-			self.constraints_function += sp.sympify(constraint)
-		for constraint in inequality_constraints:
-			self.constraints_function += sp.Max(sp.sympify(constraint), 0)
+			self.constraint_functions[constraint] = sp.lambdify(symbolic_variables, sp.sympify(constraint), 'numpy')
 
-		self.objective_func_lambda = sp.lambdify(('x', 'y', 'z'), self.objective_function, 'numpy')
-		self.constraints_func_lambda = sp.lambdify(('x', 'y', 'z'), self.constraints_function, 'numpy')
+		for constraint in inequality_constraints:
+			self.constraint_functions[constraint] = sp.lambdify(symbolic_variables, sp.Max(sp.sympify(constraint), 0), 'numpy')
+
 
 	def __call__(self, X, lambdas, r):
-		objective_value = self.objective_func_lambda(*X)
-		constraints_value = self.constraints_func_lambda(*X)
+		objective_value = self.objective_function(*X)
+		constraints_values = [constraint(*X) for constraint in self.constraint_functions.values()]
 
-		lagrange_value = objective_value + lambdas * constraints_value + (1 / r) * constraints_value**2
+		lagrange_value = objective_value + sum([lam * constraint_value for lam, constraint_value in zip(lambdas, constraints_values)]) + (1 / r) * sum([constraint_value**2 for constraint_value in constraints_values])
 		return lagrange_value
 
-	def constraint_function(self, X):
-		return self.constraints_func_lambda(*X)
+
+	def calculate_constraint_value(self, X, constraint):
+		return self.constraint_functions[constraint](*X)
 
 
-objective_function = '-x*y*z'
-equality_constraints = ['2*x*y + 2*x*z + 2*y*z - 1']
-inequality_constraints = ['-x', '-y', '-z']
+if __name__ == '__main__':
+	tol = 1e-4
+	alpha = 0.4
 
-lagrange_func = LagrangeFunction(objective_function, equality_constraints, inequality_constraints)
+	objective_function = '-x*y*z'
+	equality_constraints = ['2*x*y + 2*x*z + 2*y*z - 1']
+	inequality_constraints = ['-x', '-y', '-z']
 
-# Initial values
-x0 = np.array([1, 1, 1])  # initial guess for variables
-lambda_0 = 0.0  # initial guess for Lagrange multiplier
-r = 10  # penalty parameter
+	lagrange_func = LagrangeFunction(objective_function, equality_constraints, inequality_constraints)
 
-tol = 1e-4
-alpha = 0.4
-while r > tol:
-	# Use an optimization algorithm to minimize the Lagrange function
-	x0 = simplex(lagrange_func, x0, lambda_0, r, alpha)
-	r = 0.4 * r  # update the penalty parameter
-	lambda_0 = lambda_0 + 1/r * lagrange_func.constraint_function(x0)  # update the Lagrange multiplier
+	# Initial values
+	initial_values = np.array([[0, 0, 0], [1, 1, 1], [.5, .2, .0]])
+	for x0 in initial_values:
+		iterations = 0
+		lambdas = [0.0] * (len(equality_constraints) + len(inequality_constraints))
+		r = 10
 
-print(x0)
+		while r > tol:
+			# Use an optimization algorithm to minimize the Lagrange function
+			x0, iter_count = simplex(lagrange_func, x0, lambdas, r, alpha)
+			iterations += iter_count
+			r = 0.4 * r  # update the penalty parameter
+			for i, constraint in enumerate(equality_constraints + inequality_constraints):
+				lambdas[i] += 1/r * lagrange_func.calculate_constraint_value(x0, constraint)
+
+		print(f'Initial values: {x0}')
+		print(f'Iterations: {iterations}')
+		print(f'Optimal values: {x0}')
+		print(f'Objective function value: {lagrange_func.objective_function(*x0)}')
+		print(f'Constraint values: {[lagrange_func.calculate_constraint_value(x0, constraint) for constraint in equality_constraints + inequality_constraints]}')
+		print(f'Lambda values: {lambdas}')
+		print()
