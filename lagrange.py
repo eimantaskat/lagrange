@@ -1,6 +1,8 @@
 
-from lagrange_function import LagrangeFunction
-from optimizations_algorithms import simplex
+from functions import LagrangeFunction
+from algorithms import simplex
+
+from typing import Callable, Optional
 
 
 def optimize(objective_function: str, equality_constraints: list[str], inequality_constraints: list[str], x0: list[float], lambdas: Optional[list[float]] = None, tol: Optional[float] = 1e-4, alpha: Optional[float] = 0.4, r: Optional[float] = 10, tau: Optional[float] = 0.4):

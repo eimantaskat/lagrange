@@ -1,6 +1,6 @@
 
-from lagrange_function import LagrangeFunction
-from optimizations_algorithms import simplex
+from functions import LagrangeFunction
+from algorithms import simplex
 
 import numpy as np
 
