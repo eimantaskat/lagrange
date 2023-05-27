@@ -1,9 +1,13 @@
 
 from __future__ import annotations
-from functools import reduce
-from typing import Union, Optional, Sequence, Iterable
+
 import collections.abc
 import itertools
+from functools import reduce
+from typing import Iterable, Optional, Sequence, Union
+
+from lagrange_function import LagrangeFunction
+from optimizations_algorithms import simplex
 
 
 def help():
@@ -108,3 +112,20 @@ def interpolate(points: Union[dict, Sequence[int], Iterable[Sequence[int]]], mod
 		reduce(mul, itertools.chain([values[x]], (
 			div(0 - x_known, x - x_known) for x_known in xs if x_known is not x
 			)), 1) for x in xs) % modulus
+
+
+def optimize(objective_function: str, equality_constraints: list[str], inequality_constraints: list[str], x0: list[float], lambdas: Optional[list[float]] = None, tol: Optional[float] = 1e-4, alpha: Optional[float] = 0.4, r: Optional[float] = 10, tau: Optional[float] = 0.4):
+	lagrange_func = LagrangeFunction(objective_function, equality_constraints, inequality_constraints)
+
+	if lambdas is None:
+		lambdas = [0.0] * (len(equality_constraints) + len(inequality_constraints))
+	elif len(lambdas) != len(equality_constraints) + len(inequality_constraints):
+		raise ValueError('Number of lambdas must match the number of constraints')
+
+	while r > tol:
+		x0 = simplex(lagrange_func, x0, lambdas, r, alpha)
+		r *= tau
+		for i, constraint in enumerate(equality_constraints + inequality_constraints):
+				lambdas[i] += 1/r * lagrange_func.calculate_constraint_value(x0, constraint)
+
+	return x0
