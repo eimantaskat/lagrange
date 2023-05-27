@@ -1,7 +1,8 @@
-import numpy as np
 
 from lagrange_function import LagrangeFunction
 from optimizations_algorithms import simplex
+
+import numpy as np
 
 
 if __name__ == '__main__':

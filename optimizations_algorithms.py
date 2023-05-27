@@ -1,3 +1,4 @@
+
 from typing import Callable, Optional
 
 import numpy as np
@@ -20,7 +21,6 @@ def simplex(f: Callable, x0: np.ndarray, lambdas: np.ndarray, r: float, alpha: f
 		simplex[i] = simplex[0].copy()
 		simplex[i, i-1] += delta2
 		simplex[i, np.arange(n) != i-1] += delta1
-
 
 	# iterate until convergence
 	while True:
